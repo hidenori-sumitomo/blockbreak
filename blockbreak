@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+<body>
+<script>
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  canvas.width = 400;
+  canvas.height = 800;
+  
+  canvas.setAttribute('style', 'display:block;margin:auto;background-color: #ddd');
+  
+  document.body.appendChild(canvas);
+  
+  var left = false;
+  var right= false;
+
+  var score=0;
+  var target=0;
+
+  const stick = {
+    x: null,
+    y: null,
+    width: 100,
+    height: 15,
+    
+    update: function() {
+      
+      ctx.fillRect(this.x, this.y, this.width, this.height);
+      ctx.fill();
+      
+      if(left&&stick.x>0)stick.x+=-5;
+      if(right&&stick.x<canvas.width-stick.width)stick.x+= 5;
+    }
+  }
+
+  const ball = {
+    x: null,
+    y: null,
+    width: 5,
+    height:5,
+    speed: 5,
+    dx: null,
+    dy: null,
+    
+    update: function() {
+      ctx.fillRect(this.x, this.y, this.width, this.height);
+      ctx.fill();
+    
+      if(this.x < 0 || this.x > canvas.width) this.dx *= -1;
+      if(this.y < 0 || this.y > canvas.height) this.dy *= -1;
+      
+       if(this.y > canvas.height){
+        this.dy = 0;
+        this.speed = 0;
+        alert("GAME OVER");
+        document.location.reload();
+        clearInterval(interval);
+       }
+
+      
+      
+      this.x += this.dx;
+      this.y += this.dy;
+    }
+  }
+
+  const block = {
+    width: null,
+    height: 20,
+    data: [],
+    
+    update: function() {
+      this.data.forEach(brick => {
+        ctx.strokeStyle='#0000ff'
+        ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
+        ctx.stroke();
+      })
+    }
+  }
+  
+
+  const level = [
+    [0,0,0,0,0,0],
+    [0,0,0,0,0,0],
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1],
+  ]
+
+  for(let i=0; i<level.length; i++) {
+      for(let j=0; j<level[i].length; j++) {
+        if(level[i][j]==1) {
+          target+=1;
+        }
+      }
+    }
+  
+  const init = () => {
+    stick.x = canvas.width / 2 - stick.width / 2;
+    stick.y = canvas.height - stick.height;
+    
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height-stick.height;
+    ball.dx = ball.speed;
+    ball.dy = ball.speed;
+    
+    block.width = canvas.width / level[0].length;
+    
+    for(let i=0; i<level.length; i++) {
+      for(let j=0; j<level[i].length; j++) {
+        if(level[i][j]) {
+          block.data.push({
+            x: block.width * j,
+            y: block.height * i,
+            width: block.width,
+            height: block.height
+          })
+        }
+      }
+    }
+  }
+  
+  const collide = (obj1, obj2) => {
+    return obj1.x < obj2.x + obj2.width &&
+           obj2.x < obj1.x + obj1.width &&
+           obj1.y < obj2.y + obj2.height &&
+           obj2.y < obj1.y + obj1.height;
+  }
+  
+  const loop = () => {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    
+    stick.update();
+    ball.update();
+    block.update();
+    
+    if(collide(ball, stick)) {
+      ball.dy *= -1;
+      ball.y = stick.y - ball.height;
+    }
+    
+    block.data.forEach((brick, index) => {
+      if(collide(ball, brick)) {
+        ball.dy *= -1;
+        block.data.splice(index, 1);
+        score+=1;
+        if(target==score){
+          this.dy = 0;
+          this.speed = 0;
+          alert("GAME CLEAR!!");
+          document.location.reload();
+          clearInterval(interval);
+        }
+      }
+    })
+    
+    window.requestAnimationFrame(loop);
+  }
+  
+  init();
+  loop();
+  
+  
+  document.addEventListener('keydown', keyDown,false);
+  
+  function keyDown(e){
+    if(e.key === 'ArrowLeft') left= true;
+    if(e.key === 'ArrowRight') right= true;
+  }
+
+  document.addEventListener('keyup', () => {
+    left = false;
+    right= false;
+  });
+  
+</script>
+</body>
+</html>
